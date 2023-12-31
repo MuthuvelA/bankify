@@ -8,14 +8,20 @@ import java.sql.SQLException;
 import java.util.Scanner;
 
 public class Display {
-    private Connection dbConnection;
-    private User authenticatedUser;
+    private final Connection dbConnection;
+    public User authenticatedUser;
+    Account acc=new Account();
     private Scanner s;
 
+
+    public String getAuthenticatedUserAccountno() {
+        return authenticatedUser.getAccountno();
+    }
     public Display(Connection dbConnection) {
         this.dbConnection = dbConnection;
         this.s = new Scanner(System.in);
     }
+
 
     public void start() {
         // Display menu
@@ -38,7 +44,6 @@ public class Display {
         closeConnection();
         s.close();
     }
-
     private void logIn() {
 
         System.out.print("Enter your username: ");
@@ -72,7 +77,14 @@ public class Display {
         System.out.print("Enter your mail: ");
         String mail = s.next();
 
-        if (insertNewUser(newUsername, newPassword, fullname, mail)) {
+        System.out.print("Enter your phoneno: ");
+        String phoneno = s.next();
+
+        System.out.print("Enter your account number: ");
+        String accountno = s.next();
+
+
+        if (insertNewUser(newUsername, newPassword, fullname, mail,phoneno,accountno)) {
             System.out.println("Account created successfully! You can now log in.");
             System.out.println("For login page press 1:");
             int n=s.nextInt();
@@ -84,17 +96,21 @@ public class Display {
         }
     }
 
-    private boolean insertNewUser(String username, String password, String fullname, String mail) {
-        String query = "INSERT INTO user (username, encrypted_password, full_name, email) VALUES (?, ?, ?, ?)";
-        try (PreparedStatement preparedStatement = dbConnection.prepareStatement(query)) {
+    private boolean insertNewUser(String username, String password, String fullname, String mail, String phoneno, String accountno) {
+        String query = "INSERT INTO user (username, encrypted_password, full_name, email, phoneno, account_number) VALUES (?, ?, ?, ?, ?, ?)";
+        try (Connection connection = DatabaseConnection.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
             preparedStatement.setString(1, username);
             preparedStatement.setString(2, encryptPassword(password));
             preparedStatement.setString(3, fullname);
             preparedStatement.setString(4, mail);
+            preparedStatement.setString(5, phoneno);
+            preparedStatement.setString(6, accountno);
+
             int rowsAffected = preparedStatement.executeUpdate();
             return rowsAffected > 0;
         } catch (SQLException e) {
-            System.out.println(e);
+            e.printStackTrace();
             return false;
         }
     }
@@ -102,9 +118,11 @@ public class Display {
     private User authenticateUser(String username, String password) {
         String query = "SELECT * FROM user WHERE username = ?";
         ResultSet resultSet = null;
+        Connection connection = null;
 
         try {
-            resultSet = executeQuery(query, username);
+            connection = DatabaseConnection.getConnection();
+            resultSet = executeQuery(query, username, connection);
 
             if (resultSet.next()) {
                 User user = new User();
@@ -112,8 +130,6 @@ public class Display {
                 user.setUsername(resultSet.getString("username"));
                 user.setEncryptedPassword(resultSet.getString("encrypted_password"));
 
-                //System.out.println("username: " + user.getUsername());
-                //System.out.println("encrypted :" + user.getEncryptedPassword());
                 if (decryptPassword(user.getEncryptedPassword()).equals(password)) {
                     return user;
                 }
@@ -122,9 +138,28 @@ public class Display {
             System.out.println(e);
         } finally {
             closeResultSet(resultSet);
+            closeConnection(connection);
         }
+
         return null;
     }
+
+    private ResultSet executeQuery(String query, String username, Connection connection) throws SQLException {
+        PreparedStatement preparedStatement = connection.prepareStatement(query);
+        preparedStatement.setString(1, username);
+        return preparedStatement.executeQuery();
+    }
+
+    private void closeConnection(Connection connection) {
+        try {
+            if (connection != null && !connection.isClosed()) {
+                connection.close();
+            }
+        } catch (SQLException e) {
+            System.out.println(e);
+        }
+    }
+
 
     private void closeResultSet(ResultSet resultSet) {
         if (resultSet != null) {
@@ -139,17 +174,84 @@ public class Display {
     }
 
     private void showOptions() {
-        System.out.println("MENU");
+        Account acc = new Account();
+        boolean flag = true;
 
-        System.out.println("1. Check Account Balance");
-        System.out.println("2. Initiate Fund Transfer");
-        System.out.println("3. Review Recent Transactions");
-        System.out.println("4. Change Password");
-        System.out.println("5. Logout");
-        System.out.println("6. Exit");
+        while (flag) {
+            System.out.println("MENU");
+            System.out.println("1. Check Account Balance");
+            System.out.println("2. Withdraw Amount");
+            System.out.println("3. Deposit Amount");
+            System.out.println("4. Initiate Fund Transfer");
+            System.out.println("5. Review Recent Transactions");
+            System.out.println("6. Change Password");
+            System.out.println("7. Logout");
+            System.out.println("8. Exit");
+            System.out.println("Enter your choice:");
+
+            int ch = s.nextInt();
+            switch (ch) {
+                case 1:
+                    System.out.println("Your account balance is " + acc.getBalance());
+                    break;
+                case 2:
+                    System.out.println("Enter the amount to be withdrawn:");
+                    double amoun=s.nextDouble();
+                    acc.withdraw(amoun);
+                    System.out.println("Amount withdrawn successfully");
+                    break;
+                case 3:
+                    System.out.println("Enter the amount to be deposited:");
+                    double amnt=s.nextDouble();
+                    acc.deposit(amnt);
+                    System.out.println("Amount deposited successfully");
+                    break;
+                case 4:
+                    System.out.println("Enter the account no:");
+                    String receiver = s.next();
+                    System.out.println("Re-enter the account no:");
+                    String receiverc = s.next();
+                    if (receiver.equals(receiverc)) {
+                        System.out.println("Enter the amount to be transferred: ");
+                        double amount = s.nextDouble();
+                        acc.transfer(receiver, amount);
+                    } else {
+                        System.out.println("!! ACCOUNT NUMBER NOT MATCHED !!");
+                    }
+                    break;
+                case 5:
+                    acc.transaction();
+                    break;
+                case 6:
+                    System.out.println("Enter your username to change password:");
+                    String changepassuser = s.next();
+                    System.out.println("Enter your current password:");
+                    String currpass = s.next();
+                    System.out.print("Enter your new password: ");
+                    String newPassword = s.next();
+                    s.nextLine();
+
+                    changePassword(changepassuser, currpass, newPassword);
+                    break;
+                case 7:
+                    logOut();
+                    flag = false;
+                    break;
+                case 8:
+                    System.out.println("EXITING!!");
+                    flag = false;
+                    break;
+                default:
+                    System.out.println("INVALID CHOICE!");
+            }
+        }
     }
 
-
+    private void logOut() {
+        authenticatedUser = null;
+        System.out.println("Logout successful. Returning to the login screen.");
+        start();
+    }
     private void closeConnection() {
         try {
             if (dbConnection != null && !dbConnection.isClosed()) {
@@ -160,11 +262,7 @@ public class Display {
         }
     }
 
-    private ResultSet executeQuery(String query, String username) throws SQLException {
-        PreparedStatement preparedStatement = dbConnection.prepareStatement(query);
-        preparedStatement.setString(1, username);
-        return preparedStatement.executeQuery();
-    }
+
 
 
     private String encryptPassword(String password) {
@@ -203,6 +301,51 @@ public class Display {
         //System.out.println(decryptedPassword.toString());
         return decryptedPassword.toString();
     }
+    public void changePassword(String username, String currpass, String newpass) {
+        // Authenticate the user by checking the current password
+        //System.out.println("****"+checkpass(username, currpass)+"***");
+        if (checkpass(username, currpass)) {
+            try (Connection connection = DatabaseConnection.getConnection()) {
+                String updateQuery = "UPDATE user SET encrypted_password = ? WHERE username = ? ";
+                try (PreparedStatement preparedStatement = connection.prepareStatement(updateQuery)) {
+                    preparedStatement.setString(1, encryptPassword(newpass));
+                    preparedStatement.setString(2, username);
+                    int rowsAffected = preparedStatement.executeUpdate();
+
+                    if (rowsAffected > 0) {
+                        System.out.println("Password changed successfully!");
+                    } else {
+                        System.out.println("Failed to change password. Please try again.");
+                    }
+                }
+            } catch (SQLException e) {
+                System.out.println(e);
+            }
+        } else {
+            System.out.println("Invalid current password. Password not changed.");
+        }
+    }
+
+    private boolean checkpass(String username, String password) {
+        // Use your authentication logic to check if the provided username and password match
+        System.out.println(username+"UNAME");
+        String query = "SELECT * FROM user WHERE username = ? AND encrypted_password = ?";
+        try (Connection connection = DatabaseConnection.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+
+            preparedStatement.setString(1, username);
+            preparedStatement.setString(2, encryptPassword(password));
+            System.out.println(" *****"+encryptPassword(password)+"*******");
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                return resultSet.next(); // Returns true if there's a match, false otherwise
+            }
+
+        } catch (SQLException e) {
+            System.out.println(e);
+            return false;
+        }
+    }
+
 
 
 }

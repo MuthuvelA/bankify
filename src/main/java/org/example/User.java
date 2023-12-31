@@ -9,10 +9,39 @@ public class User {
     private int id;
     private String username;
     private String encryptedPassword;
+    private String fullname;
+    private String mail;
+    private String phoneno;
+    private String accountno;
 
-    public int getId() {
-        return id;
+    public String getFullname() {
+        return fullname;
     }
+
+    public void setFullname(String fullname) {
+        this.fullname = fullname;
+    }
+
+    public String getMail() {
+        return mail;
+    }
+
+    public void setMail(String mail) {
+        this.mail = mail;
+    }
+
+    public String getPhoneno() {
+        return phoneno;
+    }
+
+    public void setPhoneno(String phoneno) {
+        this.phoneno = phoneno;
+    }
+
+    public String getAccountno() {
+        return accountno;
+    }
+
 
     public void setId(int id) {
         this.id = id;
@@ -32,13 +61,6 @@ public class User {
     public String getEncryptedPassword() {
         return encryptedPassword;
     }
-
-
-
-
-
-
-//
 
 
 }
