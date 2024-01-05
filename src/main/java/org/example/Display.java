@@ -1,4 +1,3 @@
-// Display.java
 package org.example;
 
 import java.sql.Connection;
@@ -19,9 +18,12 @@ public class Display {
         this.acc=new Account();
     }
     public void start() {
-        System.out.println("1. Log in");
-        System.out.println("2. Create a new account");
-        System.out.print("Choose an option: ");
+        System.out.println("+--------------------------+");
+        System.out.println("|       Choose an Option   |");
+        System.out.println("+--------------------------+");
+        System.out.println("| 1. Log in                |");
+        System.out.println("| 2. Create a new account  |");
+        System.out.println("+--------------------------+");
         int option = s.nextInt();
         switch (option) {
             case 1:
@@ -44,19 +46,14 @@ public class Display {
         String password = s.next();
         authenticatedUser = authenticateUser(username, password);
         if (authenticatedUser != null) {
-            //debug System.out.println("!!!"+authenticatedUser+"!!!");
             acc.setAuthenticatedUser(authenticatedUser);
             acc.setAccountno(authenticatedUser.getAccountno());
-            System.out.println(authenticatedUser.getAccountno());
-            System.out.println("Login successful! Welcome, " + authenticatedUser.getUsername() + ".");
             showOptions();
         } else {
             System.out.println("Invalid username or password. Exiting...");
             start();
         }
     }
-
-
     private void createAccount() {
         System.out.print("Enter a new username: ");
         String newUsername = s.next();
@@ -73,13 +70,6 @@ public class Display {
         if (insertNewUser(newUsername, newPassword, fullname, mail, phoneno, accountno)) {
             System.out.println("Account created successfully! You can now log in.");
             start();
-            //authenticatedUser = authenticateUser(newUsername, newPassword);
-//            if (authenticatedUser != null) {
-//                System.out.println("Login successful! Welcome, " + authenticatedUser.getUsername() + ".");
-//                acc.setAuthenticatedUser(authenticatedUser);
-//                acc.setAccountno(authenticatedUser.getAccountno());
-//
-//                showOptions();
         }
         else {
             System.out.println("Failed to create an account. Exiting...");
@@ -163,12 +153,25 @@ public class Display {
         }
     }
 
+    private void displaymenu(){
+        System.out.println("+-------------------------------------+");
+        System.out.println("|               MENU                  |");
+        System.out.println("+-------------------------------------+");
+        System.out.println("| 1. Check Account Balance            |");
+        System.out.println("| 2. Withdraw Amount                  |");
+        System.out.println("| 3. Deposit Amount                   |");
+        System.out.println("| 4. Initiate Fund Transfer           |");
+        System.out.println("| 5. Review Recent Transactions       |");
+        System.out.println("| 6. Change Password                  |");
+        System.out.println("| 7. Logout                           |");
+        System.out.println("| 8. Exit                             |");
+        System.out.println("+-------------------------------------+");
+    }
     private void showOptions() {
+        displaymenu();
         Account acc = new Account();
         boolean flag = true;
         while (flag) {
-            System.out.println("MENU");
-            System.out.println("1. Check Account Balance\n2. Withdraw Amount\n3. Deposit Amount\n4. Initiate Fund Transfer\n5. Review Recent Transactions\n6.Change Password\n7. Logout\n8.Exit");
             System.out.println("Enter your choice:");
             int ch = s.nextInt();
             switch (ch) {
@@ -246,14 +249,14 @@ public class Display {
     }
 
     private String encryptPassword(String password) {
-        int shift = 3;
+        int key = 3;
         StringBuilder encryptedPassword = new StringBuilder();
 
         for (char ch : password.toCharArray()) {
             if (Character.isLetter(ch)) {
-                char shifted = (char) (ch + shift);
+                char shifted = (char) (ch + key);
                 if ((Character.isUpperCase(ch) && shifted > 'Z') || (Character.isLowerCase(ch) && shifted > 'z')) {
-                    shifted = (char) (ch - (26 - shift));
+                    shifted = (char) (ch - (26 - key));
                 }
                 encryptedPassword.append(shifted);
             } else {
@@ -264,26 +267,23 @@ public class Display {
     }
 
     private String decryptPassword(String encryptedPassword) {
-        int shift = 3;
+        int key = 3;
         StringBuilder decryptedPassword = new StringBuilder();
 
         for (char ch : encryptedPassword.toCharArray()) {
             if (Character.isLetter(ch)) {
-                char shifted = (char) (ch - shift);
+                char shifted = (char) (ch - key);
                 if ((Character.isUpperCase(ch) && shifted < 'A') || (Character.isLowerCase(ch) && shifted < 'a')) {
-                    shifted = (char) (ch + (26 - shift));
+                    shifted = (char) (ch + (26 - key));
                 }
                 decryptedPassword.append(shifted);
             } else {
                 decryptedPassword.append(ch);
             }
         }
-        //System.out.println(decryptedPassword.toString());
         return decryptedPassword.toString();
     }
     public void changePassword(String username, String currpass, String newpass) {
-        // Authenticate the user by checking the current password
-        //System.out.println("****"+checkpass(username, currpass)+"***");
         if (checkpass(username, currpass)) {
             try (Connection connection = DatabaseConnection.getConnection()) {
                 String updateQuery = "UPDATE user SET encrypted_password = ? WHERE username = ? ";
@@ -307,16 +307,14 @@ public class Display {
     }
 
     private boolean checkpass(String username, String password) {
-        System.out.println(username+"UNAME");
         String query = "SELECT * FROM user WHERE username = ? AND encrypted_password = ?";
         try (Connection connection = DatabaseConnection.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(query)) {
-
             preparedStatement.setString(1, username);
             preparedStatement.setString(2, encryptPassword(password));
             System.out.println(" *****"+encryptPassword(password)+"*******");
             try (ResultSet resultSet = preparedStatement.executeQuery()) {
-                return resultSet.next(); // Returns true if there's a match, false otherwise
+                return resultSet.next();
             }
         } catch (SQLException e) {
             System.out.println(e);

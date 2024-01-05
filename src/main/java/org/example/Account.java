@@ -15,7 +15,6 @@ public class Account {
 
     public void setAuthenticatedUser(User authenticatedUser) {
         this.authenticatedUser = authenticatedUser;
-        //System.out.println("setauthenticateduser!!!!!"+authenticatedUser);
         this.username = authenticatedUser.getUsername();
     }
 
@@ -47,12 +46,9 @@ public class Account {
         return 0.0;
     }
     public void deposit(double amount, String depono) {
-        System.out.println("DEBUG: Authenticated User: " + authenticatedUser);
-        System.out.println("DEBUG: Account Number: " + authenticatedUser.getAccountno());
-
-        if (authenticatedUser != null && authenticatedUser.getAccountno() != null) {
+          if (authenticatedUser != null && authenticatedUser.getAccountno() != null) {
             if (amount > 0) {
-                balance += amount;
+                balance =getBalance()+amount;
                 depositToAccount(depono, amount);
                 updateDatabaseBalance();
                 logTransaction("DEPOSIT", amount, depono);
@@ -66,8 +62,8 @@ public class Account {
     }
 
     public void withdraw(double amount) {
-        if (amount > 0 && amount <= balance) {
-            balance -= amount;
+        if (amount > 0 && amount <= getBalance()) {
+            balance =getBalance()-amount;
             updateDatabaseBalance();
             logTransaction("WITHDRAWAL", amount, authenticatedUser.getAccountno());
             System.out.println("Withdrawal of $" + amount + " successful. New balance: $" + balance);
@@ -112,7 +108,6 @@ public class Account {
                     preparedStatement.setString(2, authenticatedUser.getAccountno());
                     preparedStatement.setString(3, authenticatedUser.getUsername());
                     int rowsAffected = preparedStatement.executeUpdate();
-
                     if (rowsAffected > 0) {
                         System.out.println("Balance updated successfully.");
                     } else {
@@ -162,9 +157,9 @@ public class Account {
 
                 try (ResultSet resultSet = preparedStatement.executeQuery()) {
                     System.out.println("Transaction History for Account " + accountno + ":");
-                    System.out.println("-------------------------------------------------------");
+                    System.out.println("------------------------------------------------------------------");
                     System.out.printf("%-20s%-20s%-20s%-30s\n", "Transaction ID", "Type", "Amount", "Date");
-                    System.out.println("-------------------------------------------------------");
+                    System.out.println("------------------------------------------------------------------");
 
                     while (resultSet.next()) {
                         int transactionId = resultSet.getInt("transaction_id");
