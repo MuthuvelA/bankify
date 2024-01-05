@@ -4,10 +4,12 @@ import java.sql.*;
 import java.util.Date;
 
 
+
 public class Transaction {
     private static String username;
     private static User authenticatedUser;
     private static String recipient = "NULL";
+    public static String temp;
 
 
     public static void logTransaction(String transactionType, double amount, String accountNo) {
@@ -42,28 +44,28 @@ public class Transaction {
             String selectQuery = "SELECT * FROM transactions WHERE accountno = ?";
             try (PreparedStatement preparedStatement = connection.prepareStatement(selectQuery)) {
                 preparedStatement.setString(1, accountno);
-
+                temp=accountno;
                 try (ResultSet resultSet = preparedStatement.executeQuery()) {
-                    System.out.println("Transaction History for Account " + accountno + ":");
-                    System.out.println("------------------------------------------------------------------------------------------------------");
-                    System.out.printf("| %-20s | %-20s | %-20s | %-30s |\n", "Transaction ID", "Type", "Amount", "Date");
-                    System.out.println("------------------------------------------------------------------------------------------------------");
-
+                    print();
                     while (resultSet.next()) {
                         int transactionId = resultSet.getInt("transaction_id");
                         String transactionType = resultSet.getString("transaction_type");
                         double amount = resultSet.getDouble("amount");
                         Timestamp transactionDate = resultSet.getTimestamp("transaction_date");
-
                         System.out.printf("| %-20d | %-20s | %-20.2f | %-30s |\n",
                                 transactionId, transactionType, amount, transactionDate);
                     }
-                    System.out.println("------------------------------------------------------------------------------------------------------");
-                }
+                    System.out.println("------------------------------------------------------------------------------------------------------");}
             }
         } catch (SQLException e) {
             handleSQLException(e);
         }
+    }
+    public static void print(){
+        System.out.println("Transaction History for Account " + temp + ":");
+        System.out.println("------------------------------------------------------------------------------------------------------");
+        System.out.printf("| %-20s | %-20s | %-20s | %-30s |\n", "Transaction ID", "Type", "Amount", "Date");
+        System.out.println("------------------------------------------------------------------------------------------------------");
     }
 
 

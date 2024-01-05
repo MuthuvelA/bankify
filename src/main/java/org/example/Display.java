@@ -12,6 +12,7 @@ public class Display {
     private static User authenticatedUser;
     private Account acc;
     private Scanner s;
+    public Boolean flag;
 
     public Display(Connection dbConnection) {
         this.dbConnection = dbConnection;
@@ -171,69 +172,78 @@ public class Display {
     private void showOptions() {
         displaymenu();
         Account acc = new Account();
-        boolean flag = true;
+        flag = true;
         while (flag) {
             System.out.println("Enter your choice:");
             int ch = s.nextInt();
-            switch (ch) {
-                case 1:
-                    System.out.println("Your account balance is " + acc.getBalance());
-                    break;
-                case 2:
-                    System.out.println("Enter the amount to be withdrawn:");
-                    double amoun=s.nextDouble();
-                    acc.withdraw(amoun);
-                    System.out.println("Amount withdrawn successfully");
-                    break;
-                case 3:
-                    System.out.println("Enter the account number to deposit:");
-                    String deponu=s.next();
-                    System.out.println("Enter the amount to be deposited:");
-                    double amnt=s.nextDouble();
-                    acc.deposit(amnt,deponu);
-                    System.out.println("Amount deposited successfully");
-                    break;
-                case 4:
-                    System.out.println("Enter the account no:");
-                    String receiver = s.next();
-                    System.out.println("Re-enter the account no:");
-                    String receiverc = s.next();
-                    if (receiver.equals(receiverc)) {
-                        System.out.println("Enter the amount to be transferred: ");
-                        double amount = s.nextDouble();
-                        acc.transfer(receiver, amount);
-                    } else {
-                        System.out.println("!! ACCOUNT NUMBER NOT MATCHED !!");
-                    }
-                    break;
-                case 5:
-                    acc.displaytransaction(authenticatedUser.getAccountno());
-                    break;
-                case 6:
-                    System.out.println("Enter your username to change password:");
-                    String changepassuser = s.next();
-                    System.out.println("Enter your current password:");
-                    String currpass = s.next();
-                    System.out.print("Enter your new password: ");
-                    String newPassword = s.next();
-                    s.nextLine();
-
-                    changePassword(changepassuser, currpass, newPassword);
-                    break;
-                case 7:
-                    logOut();
-                    flag = false;
-                    break;
-                case 8:
-                    System.out.println("EXITING!!");
-                    flag = false;
-                    break;
-                default:
-                    System.out.println("INVALID CHOICE!");
-            }
+            if(ch==1) option1();
+            else if(ch==2) option2();
+            else if(ch==3) option3();
+            else if(ch==4) option4();
+            else if(ch==5) option5();
+            else if(ch==6) option6();
+            else if(ch==7) otheroption(ch);
+            else System.out.println("!!INVALID CHOICE!!!");
         }
     }
+    private void option1(){
+        System.out.println("Your account balance is " + acc.getBalance());
+    }
+    private void option2(){
+        System.out.println("Enter the amount to be withdrawn:");
+        double amoun=s.nextDouble();
+        acc.withdraw(amoun);
+        System.out.println("Amount withdrawn    successfully");
 
+    }
+    private void option3(){
+        System.out.println("Enter the account number to deposit:");
+        String deponu=s.next();
+        System.out.println("Enter the amount to be deposited:");
+        double amnt=s.nextDouble();
+        acc.deposit(amnt,deponu);
+        System.out.println("Amount deposited successfully");
+    }
+    private void option4(){
+        System.out.println("Enter the account no:");
+        String receiver = s.next();
+        System.out.println("Re-enter the account no:");
+        String receiverc = s.next();
+        if (receiver.equals(receiverc)) {
+            System.out.println("Enter the amount to be transferred: ");
+            double amount = s.nextDouble();
+            acc.transfer(receiver, amount);
+        } else {
+            System.out.println("!! ACCOUNT NUMBER NOT MATCHED !!");
+        }
+    }
+    private void option5(){
+        acc.displaytransaction(authenticatedUser.getAccountno());
+    }
+    private void option6(){
+        System.out.println("Enter your username to change password:");
+        String changepassuser = s.next();
+        System.out.println("Enter your current password:");
+        String currpass = s.next();
+        System.out.print("Enter your new password: ");
+        String newPassword = s.next();
+        s.nextLine();
+
+        changePassword(changepassuser, currpass, newPassword);
+
+    }
+    private void otheroption(int ch){
+        if(ch==7){
+            logOut();
+            flag = false;
+        }
+        else if(ch==8){
+            System.out.println("EXITING!!");
+            flag = false;
+        }
+
+
+    }
     private void logOut() {
         authenticatedUser = null;
         System.out.println("Logout successful. Returning to the login screen.");
@@ -313,7 +323,6 @@ public class Display {
              PreparedStatement preparedStatement = connection.prepareStatement(query)) {
             preparedStatement.setString(1, username);
             preparedStatement.setString(2, encryptPassword(password));
-            System.out.println(" *****"+encryptPassword(password)+"*******");
             try (ResultSet resultSet = preparedStatement.executeQuery()) {
                 return resultSet.next();
             }

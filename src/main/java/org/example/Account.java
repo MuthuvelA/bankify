@@ -74,7 +74,7 @@ public class Account {
 
     public void transfer(String recipientAccountNo, double amount) {
         if (amount > 0 && amount <= balance) {
-            balance -= amount;
+            balance = getBalance()-amount;
             depositToAccount(recipientAccountNo, amount);
             updateDatabaseBalance();
             logTransaction("TRANSFER", amount, recipientAccountNo);
