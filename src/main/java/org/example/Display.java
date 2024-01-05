@@ -9,27 +9,20 @@ import java.util.Scanner;
 
 public class Display {
     private final Connection dbConnection;
-    public User authenticatedUser;
-    Account acc=new Account();
+    private static User authenticatedUser;
+    private Account acc;
     private Scanner s;
 
-
-    public String getAuthenticatedUserAccountno() {
-        return authenticatedUser.getAccountno();
-    }
     public Display(Connection dbConnection) {
         this.dbConnection = dbConnection;
         this.s = new Scanner(System.in);
+        this.acc=new Account();
     }
-
-
     public void start() {
-        // Display menu
         System.out.println("1. Log in");
         System.out.println("2. Create a new account");
         System.out.print("Choose an option: ");
         int option = s.nextInt();
-
         switch (option) {
             case 1:
                 logIn();
@@ -40,21 +33,21 @@ public class Display {
             default:
                 System.out.println("Invalid option. Exiting...");
         }
-
         closeConnection();
         s.close();
     }
     private void logIn() {
-
         System.out.print("Enter your username: ");
         String username = s.next();
 
         System.out.print("Enter your password: ");
         String password = s.next();
-
         authenticatedUser = authenticateUser(username, password);
-
         if (authenticatedUser != null) {
+            //debug System.out.println("!!!"+authenticatedUser+"!!!");
+            acc.setAuthenticatedUser(authenticatedUser);
+            acc.setAccountno(authenticatedUser.getAccountno());
+            System.out.println(authenticatedUser.getAccountno());
             System.out.println("Login successful! Welcome, " + authenticatedUser.getUsername() + ".");
             showOptions();
         } else {
@@ -63,39 +56,35 @@ public class Display {
         }
     }
 
+
     private void createAccount() {
-        // Get new user details
         System.out.print("Enter a new username: ");
         String newUsername = s.next();
-
         System.out.print("Enter a new password: ");
         String newPassword = s.next();
-
         System.out.print("Enter your full name: ");
         String fullname = s.next();
-
         System.out.print("Enter your mail: ");
         String mail = s.next();
-
         System.out.print("Enter your phoneno: ");
         String phoneno = s.next();
-
         System.out.print("Enter your account number: ");
         String accountno = s.next();
-
-
-        if (insertNewUser(newUsername, newPassword, fullname, mail,phoneno,accountno)) {
+        if (insertNewUser(newUsername, newPassword, fullname, mail, phoneno, accountno)) {
             System.out.println("Account created successfully! You can now log in.");
-            System.out.println("For login page press 1:");
-            int n=s.nextInt();
-            if(n==1){
-                logIn();
-            }
-        } else {
+            start();
+            //authenticatedUser = authenticateUser(newUsername, newPassword);
+//            if (authenticatedUser != null) {
+//                System.out.println("Login successful! Welcome, " + authenticatedUser.getUsername() + ".");
+//                acc.setAuthenticatedUser(authenticatedUser);
+//                acc.setAccountno(authenticatedUser.getAccountno());
+//
+//                showOptions();
+        }
+        else {
             System.out.println("Failed to create an account. Exiting...");
         }
     }
-
     private boolean insertNewUser(String username, String password, String fullname, String mail, String phoneno, String accountno) {
         String query = "INSERT INTO user (username, encrypted_password, full_name, email, phoneno, account_number) VALUES (?, ?, ?, ?, ?, ?)";
         try (Connection connection = DatabaseConnection.getConnection();
@@ -106,11 +95,10 @@ public class Display {
             preparedStatement.setString(4, mail);
             preparedStatement.setString(5, phoneno);
             preparedStatement.setString(6, accountno);
-
             int rowsAffected = preparedStatement.executeUpdate();
             return rowsAffected > 0;
         } catch (SQLException e) {
-            e.printStackTrace();
+            System.out.println(e);
             return false;
         }
     }
@@ -129,8 +117,9 @@ public class Display {
                 user.setId(resultSet.getInt("user_id"));
                 user.setUsername(resultSet.getString("username"));
                 user.setEncryptedPassword(resultSet.getString("encrypted_password"));
-
-                if (decryptPassword(user.getEncryptedPassword()).equals(password)) {
+                user.setAccountno(resultSet.getString("account_number"));
+                String decryptedPassword = decryptPassword(user.getEncryptedPassword());
+                if (decryptedPassword.equals(password)) {
                     return user;
                 }
             }
@@ -143,6 +132,7 @@ public class Display {
 
         return null;
     }
+
 
     private ResultSet executeQuery(String query, String username, Connection connection) throws SQLException {
         PreparedStatement preparedStatement = connection.prepareStatement(query);
@@ -176,19 +166,10 @@ public class Display {
     private void showOptions() {
         Account acc = new Account();
         boolean flag = true;
-
         while (flag) {
             System.out.println("MENU");
-            System.out.println("1. Check Account Balance");
-            System.out.println("2. Withdraw Amount");
-            System.out.println("3. Deposit Amount");
-            System.out.println("4. Initiate Fund Transfer");
-            System.out.println("5. Review Recent Transactions");
-            System.out.println("6. Change Password");
-            System.out.println("7. Logout");
-            System.out.println("8. Exit");
+            System.out.println("1. Check Account Balance\n2. Withdraw Amount\n3. Deposit Amount\n4. Initiate Fund Transfer\n5. Review Recent Transactions\n6.Change Password\n7. Logout\n8.Exit");
             System.out.println("Enter your choice:");
-
             int ch = s.nextInt();
             switch (ch) {
                 case 1:
@@ -201,9 +182,11 @@ public class Display {
                     System.out.println("Amount withdrawn successfully");
                     break;
                 case 3:
+                    System.out.println("Enter the account number to deposit:");
+                    String deponu=s.next();
                     System.out.println("Enter the amount to be deposited:");
                     double amnt=s.nextDouble();
-                    acc.deposit(amnt);
+                    acc.deposit(amnt,deponu);
                     System.out.println("Amount deposited successfully");
                     break;
                 case 4:
@@ -261,9 +244,6 @@ public class Display {
             System.out.println(e);
         }
     }
-
-
-
 
     private String encryptPassword(String password) {
         int shift = 3;
@@ -327,7 +307,6 @@ public class Display {
     }
 
     private boolean checkpass(String username, String password) {
-        // Use your authentication logic to check if the provided username and password match
         System.out.println(username+"UNAME");
         String query = "SELECT * FROM user WHERE username = ? AND encrypted_password = ?";
         try (Connection connection = DatabaseConnection.getConnection();
@@ -339,7 +318,6 @@ public class Display {
             try (ResultSet resultSet = preparedStatement.executeQuery()) {
                 return resultSet.next(); // Returns true if there's a match, false otherwise
             }
-
         } catch (SQLException e) {
             System.out.println(e);
             return false;

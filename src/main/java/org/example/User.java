@@ -14,30 +14,9 @@ public class User {
     private String phoneno;
     private String accountno;
 
-    public String getFullname() {
-        return fullname;
+    public void setAccountno(String accountno){
+        this.accountno=accountno;
     }
-
-    public void setFullname(String fullname) {
-        this.fullname = fullname;
-    }
-
-    public String getMail() {
-        return mail;
-    }
-
-    public void setMail(String mail) {
-        this.mail = mail;
-    }
-
-    public String getPhoneno() {
-        return phoneno;
-    }
-
-    public void setPhoneno(String phoneno) {
-        this.phoneno = phoneno;
-    }
-
     public String getAccountno() {
         return accountno;
     }
