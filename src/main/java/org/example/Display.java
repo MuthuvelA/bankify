@@ -1,5 +1,6 @@
 package org.example;
 
+import javax.swing.*;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -206,7 +207,7 @@ public class Display {
                     }
                     break;
                 case 5:
-                    acc.transaction();
+                    acc.displaytransaction(authenticatedUser.getAccountno());
                     break;
                 case 6:
                     System.out.println("Enter your username to change password:");

@@ -98,7 +98,6 @@ public class Account {
             handleSQLException(e);
         }
     }
-
     private void updateDatabaseBalance() {
         try (Connection connection = DatabaseConnection.getConnection()) {
             if (authenticatedUser != null && authenticatedUser.getAccountno() != null) {
@@ -122,57 +121,15 @@ public class Account {
         }
     }
 
-
-    private void logTransaction(String transactionType, double amount, String accountNo) {
-        try (Connection connection = DatabaseConnection.getConnection()) {
-            if (accountNo != null) {
-                String insertQuery = "INSERT INTO transactions (transaction_type, amount, transaction_date, username, accountno,recipientaccountno) " +
-                        "VALUES (?, ?, ?, ?, ?,?)";
-                try (PreparedStatement preparedStatement = connection.prepareStatement(insertQuery)) {
-                    preparedStatement.setString(1, transactionType);
-                    preparedStatement.setDouble(2, amount);
-                    preparedStatement.setTimestamp(3, new Timestamp(new Date().getTime()));
-                    preparedStatement.setString(4, username);
-                    preparedStatement.setString(5, authenticatedUser.getAccountno());
-                    preparedStatement.setString(6, receiptent);
-                    preparedStatement.executeUpdate();
-                }
-            } else {
-                System.out.println("Error: Account number not set.");
-            }
-        } catch (SQLException e) {
-            handleSQLException(e);
-        }
-    }
-
     private void handleSQLException(SQLException e) {
         System.out.println("An error occurred: " + e.getMessage());
     }
-
-    public void transaction() {
-        try (Connection connection = DatabaseConnection.getConnection()) {
-            String selectQuery = "SELECT * FROM transactions WHERE accountno = ?";
-            try (PreparedStatement preparedStatement = connection.prepareStatement(selectQuery)) {
-                preparedStatement.setString(1, accountno);
-
-                try (ResultSet resultSet = preparedStatement.executeQuery()) {
-                    System.out.println("Transaction History for Account " + accountno + ":");
-                    System.out.println("------------------------------------------------------------------");
-                    System.out.printf("%-20s%-20s%-20s%-30s\n", "Transaction ID", "Type", "Amount", "Date");
-                    System.out.println("------------------------------------------------------------------");
-
-                    while (resultSet.next()) {
-                        int transactionId = resultSet.getInt("transaction_id");
-                        String transactionType = resultSet.getString("transaction_type");
-                        double amount = resultSet.getDouble("amount");
-                        Timestamp transactionDate = resultSet.getTimestamp("transaction_date");
-
-                        System.out.printf("%-20d%-20s%-20.2f%-30s\n", transactionId, transactionType, amount, transactionDate);
-                    }
-                }
-            }
-        } catch (SQLException e) {
-            handleSQLException(e);
-        }
+    private void logTransaction(String transactionType, double amount, String accountNo) {
+        Transaction.logTransaction(transactionType, amount, accountNo);
     }
+    public static void displaytransaction(String accountno){
+        Transaction.displaytrans(accountno);
+    }
+
+
 }
